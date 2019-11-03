@@ -1,5 +1,6 @@
 <html>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>645 数据标识查询</title>
 <head>
 	<script>
 		/*! jQuery v3.4.1 | (c) JS Foundation and other contributors | jquery.org/license */
@@ -8,35 +9,202 @@
 </head>
 <style>
 	/*  隐藏 html 里的注释*/
-	hidden,#database
+	hidden,.hidden,#database
 	{
 		display:none
 	}
 	
-	/* 表格样式 */
+	/* 顶部区域 */
+	div.topArea
+	{
 	
+	}
+	
+	/* 输入区域 */
+	div.inputArea
+	{
+		width:50%;
+		
+	}
+	
+	/* 提示区域 */
+	div.hintArea #ta_hint
+	{
+		color:f00;
+		text-align:center;
+		display:none;
+	}
+	
+	/* 结果显示区域 */
+	div.resultArea
+	{
+		/*display:none;*/
+	}
+	table
+	{
+		width:90%;
+		margin:10px auto;
+		border-collapse:collapse;
+		text-align:center;
+		border:1px solid #000;
+	}
+	table thead
+	{
+		background:#eee
+	}
+	table tr td
+	{
+		border:1px solid #000
+	}
+	table tr td label.di33
+	{
+		color:#f00;
+	}
 </style>
 <script>
+	var ip_di;
+	var bt_query;
+	var ta_hint;
+	var tb_resultTable;
+	
 	$(document).ready(function(){
+		//测试
+		
+		//初始化变量
+		initValue();
+		
 		//初始化监听事件
+		initElementCallback();
 		
 		//初始化数据库
+		
 	});
 	
+	//初始化变量
+	function initValue(){
+		ip_di=$("input#ip_di");
+		bt_query=$("button#bt_query");
+		ta_hint=$("div#ta_hint");
+		tb_resultTable=$("table#resultTable");
+	};
+	
+	//初始化监听事件
+	function initElementCallback(){
+		//输入框为空就隐藏结果显示区域
+		ip_di.keyup(ip_di_onKeyUpListener);
+		
+		//绑定查询按钮监听事件
+		bt_query.click(bt_query_onClickListener);
+	};
+	
+	//输入框的内容变化监听
+	function ip_di_onKeyUpListener(){
+		ta_hint.hide();
+	}
+	
+	//查询按钮的点击监听
+	function bt_query_onClickListener(){
+		var di;
+		//获取 input 控件的内容（要查询的数据标签）并去除空格和转为小写字符
+		di=ip_di.val();
+		di=di.replace(/\s/g,"");
+		if (di.length!=8){
+			ta_hint.text("数据标识长度错误，正常输入为 4 字节 8 字符");
+			ta_hint.show();
+			tb_resultTable.hide();
+			return;
+		}
+		di=di.toLowerCase();
+		if(!/^[a-z,0-9]{8}$/.test(di)){
+			ta_hint.text("输入的内容含有非法字符。正确字符范围：A-Z，a-z，0-9");
+			ta_hint.show();
+			tb_resultTable.hide();
+			return;
+		}
+		//将输入的数据标签转为 4 字节 16 进制数并作减 33 处理
+		var di0,di1,di2,di3;
+		di0=parseInt(di.substr(0,2),16);
+		di1=parseInt(di.substr(2,2),16);
+		di2=parseInt(di.substr(4,2),16);
+		di3=parseInt(di.substr(6,2),16);
+		di0-=0x33;
+		di1-=0x33;
+		di2-=0x33;
+		di3-=0x33;
+		di0&=0xff;
+		di1&=0xff;
+		di2&=0xff;
+		di3&=0xff;
+		di0=formatHex(di0.toString(16));
+		di1=formatHex(di1.toString(16));
+		di2=formatHex(di2.toString(16));
+		di3=formatHex(di3.toString(16));
+		//拼凑 4 各字节并查询数据标签的具体内容
+		di=di3+di2+di1+di0;
+		//先情况旧表格内容在生成新表格内容，然后显示表格内容
+		var protocol_645_13="645_13";
+		var record=database.getRecord(protocol_645_13,di);
+		if (record==null){
+			ta_hint.text("在协议中找不到对应的数据标识");
+			ta_hint.show();
+			tb_resultTable.hide();
+			return;
+		}
+		var tb_tbody_tr;
+		var tb_tbody_tr_content;
+		$("tbody#tb_tbody tr td").remove();
+		tb_tbody_tr=$("tbody#tb_tbody tr");
+		tb_tbody_tr_content=createTableLineContent(record);
+		tb_tbody_tr.html(tb_tbody_tr_content);
+		tb_resultTable.show();
+	}
+	
+	//格式化 16 进制数的格式
+	function formatHex(hexString){
+		if (hexString.length<2) hexString='0'+hexString;
+		return hexString;
+	}
+	
+	//生成表格记录
+	function createTableLineContent(record){
+		var i=0;
+		var tmp="";
+		var result="";
+		function formatTdContent(data){
+			if (i<4){
+				tmp=parseInt(data,16);
+				tmp+=0x33;
+				tmp&=0xff;
+				tmp=tmp.toString(16);
+				tmp=formatHex(tmp);
+				tmp=tmp.toUpperCase();
+				data=data+"<br/>("+"<label class=\"di33\">"+tmp+"</label>)";
+				i++;
+			}
+			return "<td>"+data+"</td>";
+		};
+		for (var t in record) result+=formatTdContent(record[t]);
+		return result;
+	}
 </script>
 <body>
-	<div>
+	<div class="topArea">
 		<hidden> 顶部美化区域</hidden>
 	
 	<div>
-	<div>
+	<div class="inputArea">
 		<hidden>输入区域</hidden>
-		
+		<input id="ip_di"></input>
+		<button id="bt_query">查询</button>
 	</div>
-	<div>
+	<div class="hintArea">
+		<hidden>提示区域</hidden>
+		<div id="ta_hint"></div>
+	</div>
+	<div class="resultArea">
 		<hidden>结果显示区域</hidden>
-		<table >
-			<th>
+		<table id="resultTable">
+			<thead>
 				<tr>
 					<td class="cls-ShuJuBiaoShi" colspan="4">数据标识</td>
 					<td class="cls-ShuJuGeShi" rowspan="2">数据格式</td>
@@ -50,27 +218,56 @@
 					<td>DI2</td>
 					<td>DI1</td>
 					<td>DI0</td>
-					<td></td>
-					<td></td>
-					<td></td>
 					<td>读</td>
 					<td>写</td>
-					<td></td>
 				</tr>
-			</th>
-			<tb>
-			
-			</tb>
+			</thead>
+			<tbody id="tb_tbody">
+				<tr class="">
+					
+				</tr>
+			</tbody>
 		</table>
 	</div>
 </body>
 <script>
-	var dataSource={
+	var database={
 		//获取 数据标识详情
-		getDIDetailByDI:function(di){
-			
+		getRecord:function(tableName,recordId){
+			var tb=this.getTable(tableName);
+			if (tb["r"+recordId]==undefined) return null
+			return tb["r"+recordId];
 		},
-		//数据标识详情列表
+		getTable:function(tableName){
+			return this['protocol_'+tableName];
+		},
+		protocol_645_13:{
+			//数据标识详情列表
+			r078003ff:{
+				di3:"07",
+				di2:"80",
+				di1:"03",
+				di0:"FF",
+				dFormat:"YYMMDDhh",
+				dLength:"4*12",
+				dUnit:"年月日时",
+				dFRead:"*",
+				dFWrite:"",
+				dIName:"上 1-12 次月结算日结算时间数据块"
+			},
+			r088003ff:{
+				di3:"07",
+				di2:"80",
+				di1:"03",
+				di0:"FF",
+				dFormat:"YYMMDDhh",
+				dLength:"4*12",
+				dUnit:"年月日时",
+				dFRead:"*",
+				dFWrite:"",
+				dIName:"上 1-12 次月结算日结算时间数据块"
+			}
+		}
 	}
 </script>
 </html>
