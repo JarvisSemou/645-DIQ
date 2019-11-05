@@ -15,10 +15,17 @@
 	}
 	
 	/* 全局设置 ------------------------- */
+	body
+	{
+		align-content:center;
+	}
 	div.topArea,div.inputArea,div.hintArea,div.resultArea
 	{
 		background-color:rgba(255,255,255,0.57);
-		
+		width:80%;
+		margin-left:10%;
+		margin-right:10%;
+		align-content:center;
 	}
 	
 	/* 顶部区域 ------------------------- */
@@ -29,10 +36,27 @@
 	
 	/* 输入区域 ------------------------- */
 	div.inputArea
-	{
-		width:50%;
-		
+	{	
+		margin-top:120px;
 	}
+	div.inputArea div
+	{
+		width:60%;
+		height:30px;
+		margin-left:20%;
+		margin-right:20%;
+	}
+	div.inputArea div input#ip_di
+	{
+		display:inline-block;
+		flex:3
+	}
+	div.inputArea div button#bt_query
+	{
+		display:inline-block;
+		flex:1
+	}
+	
 	
 	/* 提示区域 ------------------------- */
 	div.hintArea #ta_hint
@@ -50,11 +74,12 @@
 	table#resultTable
 	{
 		display:none;
-		width:90%;
-		margin:10px auto;
 		border-collapse:collapse;
 		text-align:center;
 		border:1px solid #000;
+		table-layout:fixed;
+		width:100%;
+		margin-top:20px;
 	}
 	table#resultTable thead
 	{
@@ -209,8 +234,10 @@
 	</div>
 	<div class="inputArea">
 		<!-- 输入区域 -->
-		<input id="ip_di"></input>
-		<button id="bt_query">查询</button>
+		<div>
+			<input id="ip_di"></input>
+			<button id="bt_query">查询</button>
+		</div>
 	</div>
 	<div class="hintArea">
 		<!-- 提示区域 -->
